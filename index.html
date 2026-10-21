@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JJ Props — NBA Player Props &amp; Picks</title>
+<meta name="description" content="JJ Props: live NBA player-prop and game predictions against real DraftKings lines, explained in plain English. Auto Parlay builder, live lead tracker.">
+<meta name="theme-color" content="#060912">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JJ Props">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JJ Props">
+<meta property="og:title" content="JJ Props — NBA Player Props &amp; Picks">
+<meta property="og:description" content="Live NBA prop and game predictions vs real DraftKings lines, explained in plain English. Build a 5–10 leg Auto Parlay in one tap.">
+<meta property="og:url" content="https://drunksalmy.github.io/jj-props/">
+<meta property="og:image" content="https://drunksalmy.github.io/jj-props/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/styles.css">
+<script>
+  // pick the saved theme before the page paints (Midnight is the default look)
+  try {
+    var t = JSON.parse(localStorage.getItem('he.set.theme') || '"dark"');
+    if (t === 'auto') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="#picks" data-tab="picks" aria-label="JJ Props home">
+    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="jjg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset=".55" stop-color="#4f8cff"/><stop offset="1" stop-color="#00d4ff"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="18" fill="#0b1124"/><rect x="2.5" y="2.5" width="59" height="59" rx="17.5" fill="none" stroke="url(#jjg)" stroke-width="2.5"/><g fill="none" stroke="url(#jjg)" stroke-width="2" opacity=".5"><circle cx="32" cy="32" r="21"/><path d="M11 32h42M18 17c7 8 7 22 0 30M46 17c-7 8-7 22 0 30"/></g><g fill="none" stroke="#fff" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 20h6v19a5.5 5.5 0 0 1-10.5 2.5"/><path d="M40 20h6v19a5.5 5.5 0 0 1-10.5 2.5"/></g></svg>
+    <div><span class="brand-word"><span>JJ</span> <em>Props</em></span><small>NBA props &amp; picks, explained</small></div>
+  </a>
+  <div class="top-right">
+    <span id="status" aria-live="polite"></span>
+    <button class="icon-btn" data-act="refresh" title="Refresh now" aria-label="Refresh now"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button>
+    <button class="icon-btn" id="theme-btn" data-act="theme" title="Midnight / daylight" aria-label="Switch between dark and light look"></button>
+    <button class="icon-btn" data-act="settings" title="Settings" aria-label="Settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
+  </div>
+</header>
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button data-tab="picks" role="tab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.6 3.2-1.6 5-3.1 7C7.7 11 7 12.4 7 14.3a5 5 0 0 0 10 0c0-2.7-1.6-4.3-2.4-6.6-.9 1-1.3 2.2-1.3 3.4C12.6 8.6 13.1 5.5 12 2.5z"/></svg><span class="tab-lbl"><span class="tl">Top </span>Picks</span></button>
+  <button data-tab="games" role="tab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.8 5.8c2.9 3.4 2.9 9 0 12.4M18.2 5.8c-2.9 3.4-2.9 9 0 12.4"/></svg><span class="tab-lbl">Games</span></button>
+  <button data-tab="props" role="tab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg><span class="tab-lbl"><span class="tl">Player </span>Props</span></button>
+  <button data-tab="guide" role="tab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span class="tab-lbl"><span class="tl">How it works</span><span class="ts">Guide</span></span></button>
+</nav>
+<div id="datebar" class="datebar"></div>
+<div id="banner"></div>
+<main id="main" tabindex="-1">
+  <div class="boot"><div class="spinner"></div><p>Getting today's NBA games…</p></div>
+</main>
+<footer class="foot-note">
+  <p class="foot-brand">JJ Props</p>
+  <p>Data: ESPN's public NBA feed — scores, box scores, injuries and DraftKings lines. Updates live while games are on.</p>
+  <p>Predictions are estimates, not guarantees. For entertainment and learning · 21+ · Please bet responsibly. Not affiliated with the NBA, ESPN or DraftKings.</p>
+</footer>
+<div id="modal-root"></div>
+<div id="tooltip" role="tooltip"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p class="noscript">JJ Props needs JavaScript turned on.</p></noscript>
+<script src="js/util.js"></script>
+<script src="js/store.js"></script>
+<script src="js/espn.js"></script>
+<script src="js/model.js"></script>
+<script src="js/explain.js"></script>
+<script src="js/parlay.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

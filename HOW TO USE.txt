@@ -1,0 +1,96 @@
+JJ Props — NBA Player Props & Picks
+===================================
+
+OPEN IT
+  Easiest: go to the website on any phone or computer:
+      https://drunksalmy.github.io/jj-props/
+  On a phone, open that link and choose "Add to Home Screen" in the browser
+  menu. It then opens like a normal app.
+
+  Or on this computer: open the "JJ Props" folder on your Desktop and
+  double-click  index.html
+
+  The first time takes about 30–60 seconds while it downloads player stats.
+  After that it opens fast (stats are saved in your browser). Keep the tab
+  open during games — scores, the lead tracker and live chances refresh
+  every 15 seconds on their own.
+
+
+WHAT'S ON EACH TAB
+  Top Picks     Tonight's best plays, and the AUTO PARLAY: choose 5–10 legs and
+                a style, and JJ Props fills the slip with the best legs for you.
+                Tap any card to see exactly why.
+  Games         Who wins, by how many (winning margin vs the sportsbook spread),
+                total points, injuries, and the live lead tracker
+                (current lead, biggest lead, lead changes, ties, scoring runs).
+  Player Props  Every rotation player's points, rebounds, assists, PRA and 3-pointers,
+                compared with the real DraftKings line (shown as "DK -115 / -105").
+                Betting somewhere else? Type that sportsbook's line into the "Line"
+                box — the pick and the explanation update instantly (and are remembered).
+  How it works  Over/under, spreads, moneylines and parlays explained in plain English.
+
+
+HOW TO READ A PICK
+  OVER 24.5 points ....... he needs 25 or more for the bet to win
+  Strong / Good / Lean ... how much we like it ("No clear edge" = skip it)
+  The ring (58%) ......... out of 100 bets like this, we expect about 58 wins
+  needs 53% .............. how often it must win to be worth betting at that price
+                           (the small mark on the ring; the bigger the gap, the better)
+  Hit rate L10 7/10 ...... this bet would have won in 7 of his last 10 games
+  DK -115 / -105 ......... the DraftKings line and its over / under odds
+  Estimate ............... DraftKings has no line for him yet (they usually post
+                           player lines on game day), so the app uses his average
+
+
+THE AUTO PARLAY (on Top Picks)
+  1. Pick how many legs: 5, 6, 7, 8, 9 or 10.
+  2. Pick a style:
+       Best value ... legs where our chance beats the DraftKings price the most
+       Safest ....... legs most likely to hit
+  3. Don't like a leg? Tap the swap button next to it to get the next best one.
+  4. "Copy slip" copies the whole slip so you can paste it anywhere.
+  Chance all hit, $10 pays, and Expected return show what the slip is worth.
+  Remember: every leg has to win. Five legs at 55% each hit only about 1 in 20.
+
+
+WHY SO FEW PICKS EARLY IN THE SEASON?
+  Sportsbook lines are usually close to right. Our chance mixes our model with
+  DraftKings' own odds — and in the first weeks, when our numbers are mostly
+  from last season (and players have new teams and roles), DraftKings' odds
+  count more. So early on you'll mostly see "Slight lean" picks. More picks
+  show up as players log games.
+
+
+LOOK
+  The moon / sun button switches between Midnight (dark) and Daylight (light).
+
+
+IF SOMETHING LOOKS WRONG
+  "Couldn't reach ESPN's data feed" .... check your internet; the app keeps retrying.
+  Numbers look stuck or old ............ gear icon (Settings) → "Reload all data".
+  Page is blank ......................... right-click index.html → Open with → Chrome or Edge.
+
+
+UPDATING THE WEBSITE LATER
+  The website comes from your GitHub repository "jj-props":
+      https://github.com/drunksalmy/jj-props
+  Change a file there (GitHub lets you edit or upload files in the browser) and
+  the website updates by itself in about a minute.
+
+
+WHERE THE DATA COMES FROM
+  ESPN's public NBA feed — the same one espn.com uses — for scores, box scores,
+  injuries, team records, and DraftKings lines (game lines and player props).
+  It isn't an official developer API, so ESPN could change it someday.
+
+
+IMPORTANT
+  Predictions are estimates, not guarantees — even strong picks lose often.
+  For people 21+ where sports betting is legal. Only bet what you can afford to lose.
+
+
+FILES
+  index.html ........ open this
+  css/, js/, icons/ . the app itself (plain HTML/CSS/JavaScript, no install)
+  fonts/ ............ font licenses (the fonts are built into css/fonts.css)
+  tests/ ............ automated tests for developers (see tests/README.md)
