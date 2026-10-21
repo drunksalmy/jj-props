@@ -333,6 +333,7 @@
       '<div class="ps-actions"><button class="btn" data-parlay-copy>' + I.copy + 'Copy slip</button>' +
       (Object.keys(cfg.excluded || {}).length ? '<button class="btn ghost sm" data-parlay-reset>Undo swaps</button>' : '') + '</div></div>';
     var notes = [];
+    if (S.loading && S.loading.active) notes.push('Still loading some players — the slip can change as the rest finish.');
     if (slip.legs.length < slip.want) notes.push('Only ' + slip.legs.length + ' legs are available right now — we only use real DraftKings lines on games that haven\'t started.');
     if (slip.nFiller) notes.push(slip.nFiller + ' leg' + (slip.nFiller > 1 ? 's have' : ' has') + ' no real edge (we like only ' + slip.withEdge + ' leg' + (slip.withEdge === 1 ? '' : 's') + ' today), so a smaller slip is smarter.');
     if (slip.sameGame.length) notes.push('Some legs share a game; DraftKings prices same-game parlays differently, so that payout may be lower.');

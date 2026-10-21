@@ -5,7 +5,8 @@
  *              (DraftKings or a line you typed) plus spread / total / moneyline game bets
  *  build       "best" mode  → the legs with the biggest edge over their price
  *              "safe" mode  → the legs most likely to hit (that aren't clearly bad bets)
- *              one leg per player, one per game when possible (same-game legs move together)
+ *              one leg per player, one per game when possible (same-game legs move together),
+ *              and never two game bets on the same game (a spread and a moneyline are nearly the same bet)
  *  stats       chance all legs hit = multiply the leg chances (legs from different games are close
  *              to independent); payout = multiply the decimal odds; value = chance × payout − 1
  */
@@ -105,10 +106,11 @@
       : function (a, b) { return (b.edge - a.edge) || (b.p - a.p); });
     var rest = pool.filter(function (c) { return ok.indexOf(c) < 0; })
       .sort(function (a, b) { return (b.edge - a.edge) || (b.p - a.p); });
-    var legs = [], players = {}, perGame = {}, filler = {};
+    var legs = [], players = {}, perGame = {}, gameBets = {}, filler = {};
     function fits(c, cap) {
       if (legs.indexOf(c) >= 0) return false;
       if (c.playerId && players[c.playerId]) return false;
+      if (c.kind !== 'prop' && gameBets[c.gameId]) return false;
       return (perGame[c.gameId] || 0) < cap;
     }
     function take(list, isFiller) {
@@ -118,6 +120,7 @@
           if (!fits(c, cap)) continue;
           legs.push(c);
           if (c.playerId) players[c.playerId] = 1;
+          if (c.kind !== 'prop') gameBets[c.gameId] = 1;
           perGame[c.gameId] = (perGame[c.gameId] || 0) + 1;
           if (isFiller) filler[c.id] = 1;
         }

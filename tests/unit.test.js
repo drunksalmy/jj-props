@@ -260,6 +260,10 @@ test('teammates out: usage boost, minutes shared, crowded rotations trimmed', ()
   assert.ok(total > 222 - 33 + 20 && total <= 240.01, 'minutes redistributed: ' + total.toFixed(1));
   assert.ok(Object.keys(tc8.minNote).some((k) => tc8.minNote[k].k === 'minUp'));
   Object.keys(tc8.projMin).forEach((k) => assert.ok(tc8.projMin[k] <= 40));
+  // while only the key players are loaded, nobody's minutes get reshuffled
+  const part = M.teamContext(eight, 0, { partial: true });
+  Object.keys(part.projMin).forEach((k) => close(part.projMin[k], eight.find((p) => p.id === k).minBase, 1e-9));
+  assert.strictEqual(Object.keys(part.minNote).length, 0);
   // 13 healthy players whose usual minutes add up to ~290 → the end of the bench loses minutes, starters keep theirs
   const full = M.teamContext(profs.map((p) => Object.assign({}, p, { status: null })), 0);
   const sumFull = Object.keys(full.projMin).reduce((a, k) => a + full.projMin[k], 0);
@@ -345,6 +349,10 @@ test('parlay build: best value, one per player, spread across games, filler mark
   // swapping a leg brings in the next one
   const u = P.build(c, 5, 'best', { [s.legs[0].id]: 1 });
   assert.ok(!u.legs.some((l) => l.id === s.legs[0].id) && u.legs.length === 5);
+  // never two game bets on the same game (spread + moneyline would be nearly the same bet)
+  const gl = (kind, p) => ({ id: 'g:x:' + kind, kind: kind, gameId: 'gx', playerId: null, p: p, odds: -110, dec: P.decimal(-110), edge: p - 1 / P.decimal(-110) });
+  const w = P.build([gl('spread', 0.6), gl('ml', 0.6), gl('total', 0.59)].concat(c), 5, 'best', {});
+  assert.strictEqual(w.legs.filter((l) => l.gameId === 'gx').length, 1, 'one game bet per game');
   // safest = highest chance first
   const v = P.build(c, 5, 'safe', {});
   for (let i = 1; i < v.legs.length; i++) assert.ok(v.legs[i - 1].p >= v.legs[i].p);

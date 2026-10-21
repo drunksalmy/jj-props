@@ -244,7 +244,12 @@
    *  - projMin: expected minutes for each available player (missing minutes go mostly to
    *    rotation players with room to play more; a crowded roster cuts the end of the bench first)
    */
-  M.teamContext = function (profiles, teamGamesCur) {
+  /**
+   * opts.partial: only the key players are loaded so far (the ones with sportsbook lines and the injured).
+   * Then we don't reshuffle minutes — that needs the whole roster.
+   */
+  M.teamContext = function (profiles, teamGamesCur, opts) {
+    var partial = !!(opts && opts.partial);
     var out = {
       marginLoss: 0, rawLoss: 0, missingMin: 0, missingShare: { pts: 0, reb: 0, ast: 0, fg3m: 0 },
       missing: [], projMin: {}, minNote: {}
@@ -273,6 +278,10 @@
 
     // share the 240 minutes
     pool.sort(function (a, b) { return b.p.minBase - a.p.minBase; });
+    if (partial) {
+      pool.forEach(function (x) { if (x.w < 1) out.projMin[x.p.id] = x.p.minBase; });
+      return out;
+    }
     var expSum = 0;
     pool.forEach(function (x) { expSum += x.p.minBase * (1 - x.w); });
     if (expSum <= 240) {

@@ -21,7 +21,7 @@
     propSnaps: {},
     loadToken: 0, timer: null, dirty: false
   });
-  var limit = U.limiter(10);
+  var limit = U.limiter(12);
   function errNull() { return null; }
   function $(id) { return document.getElementById(id); }
 
@@ -201,21 +201,36 @@
         if (token !== S.loadToken) return;
         var jobs = [];
         S.games.forEach(function (G) {
+          var lines = (G.props && G.props.lines) || {}, injured = {};
+          ((G.sum && G.sum.injuries) || []).forEach(function (i) { injured[i.athleteId] = 1; });
           [G.g.home.id, G.g.away.id].forEach(function (tid) {
-            (S.rosters[tid] || []).forEach(function (a) { jobs.push({ G: G, a: a }); });
+            (S.rosters[tid] || []).forEach(function (a) {
+              jobs.push({ G: G, a: a, key: !!(lines[a.id] || injured[a.id] || a.injury) });
+            });
           });
         });
-        var pending = {};
-        jobs.forEach(function (j) { pending[j.G.g.id] = (pending[j.G.g.id] || 0) + 1; });
+        // players DraftKings has lines for (and injured players) load first, game by game,
+        // so the picks show up long before the deep bench has loaded
+        var keyJobs = jobs.filter(function (j) { return j.key; }), restJobs = jobs.filter(function (j) { return !j.key; });
+        jobs = keyJobs.concat(restJobs);
+        var pending = {}, keyPending = {};
+        jobs.forEach(function (j) {
+          var id = j.G.g.id;
+          pending[id] = (pending[id] || 0) + 1;
+          if (j.key) keyPending[id] = (keyPending[id] || 0) + 1;
+        });
         setLoading('Loading player stats…', 0, jobs.length);
         render();
         var done = 0;
         return Promise.all(jobs.map(function (j) {
-          return loadLogs(j.a.id, opts.force).catch(errNull).then(function () {
+          return loadLogs(j.a.id, opts.force, j.key, j.a.exp).catch(errNull).then(function () {
             if (token !== S.loadToken) return;
             done++; S.loading.done = done;
-            pending[j.G.g.id]--;
-            if (pending[j.G.g.id] === 0) { j.G.ready = true; computeGame(j.G); collectRows(); }
+            var id = j.G.g.id;
+            pending[id]--;
+            if (j.key) keyPending[id]--;
+            if (pending[id] === 0) { j.G.ready = true; j.G.partial = false; computeGame(j.G); collectRows(); }
+            else if (j.key && keyPending[id] === 0 && !j.G.ready) { j.G.partial = true; computeGame(j.G); collectRows(); }
             renderSoon();
           });
         }));
@@ -237,19 +252,21 @@
     });
   }
 
-  function loadLogs(id, force) {
+  /** exp = years in the NBA from the roster (0 = rookie: there's no older season to fetch) */
+  function loadLogs(id, force, first, exp) {
     var have = S.logs[id];
     if (have && have.done && !force && Date.now() - have.at < 30 * 60 * 1000) return Promise.resolve(have);
-    var cur = S.seasons.cur, prev = S.seasons.prev;
+    var cur = S.seasons.cur, prev = S.seasons.prev, rookie = exp === 0;
     return Promise.all([
-      limit(function () { return E.getGamelog(id, cur, true, force); }).catch(errNull),
-      limit(function () { return E.getGamelog(id, prev, false); }).catch(errNull)
+      limit(function () { return E.getGamelog(id, cur, true, force); }, !!first).catch(errNull),
+      rookie ? Promise.resolve([]) : limit(function () { return E.getGamelog(id, prev, false); }, !!first).catch(errNull)
     ]).then(function (r) {
       if (r[0] == null && r[1] == null) return null;
       var lg = { cur: r[0] || [], prev: r[1] || [], old: [], done: true, at: Date.now() };
-      if (lg.cur.length || lg.prev.length) return (S.logs[id] = lg);
-      // no games this season or last (a long injury, or a rookie): look one more season back
-      return limit(function () { return E.getGamelog(id, prev - 1, false); }).catch(errNull).then(function (old) {
+      if (lg.cur.length || lg.prev.length || rookie) return (S.logs[id] = lg);
+      // no games this season or last (a long injury): look one more season back — right away, so
+      // his game isn't left waiting behind everyone else's downloads
+      return limit(function () { return E.getGamelog(id, prev - 1, false); }, true).catch(errNull).then(function (old) {
         lg.old = old || [];
         return (S.logs[id] = lg);
       });
@@ -303,8 +320,8 @@
         }, curLogs, prevLogs, S.seasons, Math.min(Date.now(), g.startMs));
       }).filter(Boolean);
     });
-    G.tcHome = M.teamContext(G.homeP, gpOf(g.home.id));
-    G.tcAway = M.teamContext(G.awayP, gpOf(g.away.id));
+    G.tcHome = M.teamContext(G.homeP, gpOf(g.home.id), { partial: !!G.partial });
+    G.tcAway = M.teamContext(G.awayP, gpOf(g.away.id), { partial: !!G.partial });
     // started games: compare with the closing pre-game line, not in-game odds
     G.odds = (g.status.state !== 'pre' && S.oddsSaved[g.id]) || g.odds || (sum && sum.odds) || S.oddsSaved[g.id] || null;
     G.pred = M.predictGame(g, L, {
