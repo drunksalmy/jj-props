@@ -41,8 +41,9 @@
   U.pctc = function (p) { return Number.isFinite(p) ? Math.round(U.clamp(p, 0.01, 0.99) * 100) + '%' : '–'; };
   U.signed = function (x, digits) {
     if (!Number.isFinite(x)) return '–';
-    var v = digits === 0 ? Math.round(x) : (Math.round(x * 10) / 10).toFixed(digits == null ? 1 : digits);
-    return (x > 0 ? '+' : x < 0 ? '−' : '') + String(v).replace('-', '');
+    var d = digits == null ? 1 : digits, f = Math.pow(10, d);
+    var r = Math.round(x * f) / f;   // the sign follows the rounded number: −0.3 → "0", never "−0"
+    return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(d);
   };
   U.ordinal = function (n) {
     var s = ['th', 'st', 'nd', 'rd'], v = n % 100;

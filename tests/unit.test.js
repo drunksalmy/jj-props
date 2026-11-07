@@ -38,6 +38,8 @@ test('probLine half and whole lines', () => {
 test('odds helpers', () => {
   close(U.amToProb(-110), 0.5238, 1e-4); close(U.amToProb(150), 0.4, 1e-9); close(U.amToProb('+124'), 100 / 224, 1e-9);
   assert.strictEqual(U.probToAm(0.6), -150); assert.strictEqual(U.fmtAm(124), '+124');
+  // signed numbers: the sign follows what's shown (no "−0%")
+  assert.strictEqual(U.signed(-0.3, 0), '0'); assert.strictEqual(U.signed(-0.6, 0), '−1'); assert.strictEqual(U.signed(2.44), '+2.4'); assert.strictEqual(U.signed(-0.04), '0.0');
 });
 test('half lines', () => {
   assert.strictEqual(U.halfLine(24.3), 24.5); assert.strictEqual(U.halfLine(24.8), 24.5); assert.strictEqual(U.halfLine(25.1), 25.5); assert.strictEqual(U.halfLine(0.1), 0.5);
