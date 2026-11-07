@@ -2,7 +2,7 @@
 
 **Live site: https://drunksalmy.github.io/jj-props/**
 
-JJ Props predicts NBA player props (points, rebounds, assists, 3-pointers, P+R+A) and game bets (winner, spread, total), compares them with **real DraftKings lines**, and explains every over/under in plain English. It updates live while games are on.
+JJ Props predicts NBA player props (points, rebounds, assists, 3-pointers, and the combos PR = points + rebounds, PA = points + assists, PRA) and game bets (winner, spread, total), compares them with **real DraftKings lines**, and explains every over/under in plain English. It updates live while games are on.
 
 ![JJ Props](icons/og-image.png)
 
@@ -11,7 +11,7 @@ JJ Props predicts NBA player props (points, rebounds, assists, 3-pointers, P+R+A
 - **Top Picks** — the day's best plays, each with the chance it wins, what it needs to win to be worth betting, hit rates and the reasons why.
 - **Auto Parlay** — pick 5–10 legs and a style (*Best value* or *Safest*); JJ Props fills the slip with the best legs from today's DraftKings lines, one per player and spread across games, and shows the chance all legs hit, the payout on $10 and the expected return. Swap any leg or copy the slip.
 - **Games** — win chance, winning margin vs the spread, total points, injuries, and a **live lead tracker** (current lead, biggest lead, lead changes, ties, scoring runs).
-- **Player Props** — every rotation player vs the DraftKings line, with a line box to type another sportsbook's line.
+- **Player Props** — every rotation player vs the DraftKings line (PTS, REB, AST, PR, PA, PRA, 3PM), with a line box to type another sportsbook's line. Combo props show how the projection adds up (e.g. 18.5 PR = 12.4 points + 6.1 rebounds).
 - **How it works** — betting terms in plain English.
 
 ## How the numbers work (short version)

@@ -301,7 +301,9 @@ function roster(teamId) {
 // ---------------- player prop lines (DraftKings via ESPN's core API) ----------------
 // Same shape as sports.core.api.espn.com/.../odds/100/propBets: over first, then under,
 // sorted by prop type; milestone ("X+ points") entries come after the over/unders.
-const PROP_TYPE = [['1', 'Total Points', 'pts'], ['2', 'Total Assists', 'ast'], ['3', 'Total Rebounds', 'reb'], ['4', 'Total 3-Point Field Goals', 'fg3m'], ['90', 'Total Points, Rebounds, and Assists', 'pra']];
+const PROP_TYPE = [['1', 'Total Points', 'pts'], ['2', 'Total Assists', 'ast'], ['3', 'Total Rebounds', 'reb'], ['4', 'Total 3-Point Field Goals', 'fg3m'],
+  ['87', 'Total Points and Assists', 'pa'], ['88', 'Total Points and Rebounds', 'pr'], ['89', 'Total Assists and Rebounds', 'ar'], ['90', 'Total Points, Rebounds, and Assists', 'pra']];
+const COMBO = { pa: ['pts', 'ast'], pr: ['pts', 'reb'], ar: ['ast', 'reb'], pra: ['pts', 'reb', 'ast'] };
 const PROPS = {};
 function amFromProb(q) { return q >= 0.5 ? -Math.round(100 * q / (1 - q)) : Math.round(100 * (1 - q) / q); }
 function amStr(a) { return a > 0 ? '+' + a : String(a); }
@@ -324,7 +326,7 @@ function propItems(gid) {
   });
   PROP_TYPE.forEach(([tid, tname, stat]) => {
     players.forEach((pl, k) => {
-      const mean = stat === 'pra' ? pl.min * (pl.rate.pts + pl.rate.reb + pl.rate.ast) : pl.min * pl.rate[stat];
+      const mean = pl.min * (COMBO[stat] || [stat]).reduce((t, k) => t + pl.rate[k], 0);
       if (stat === 'fg3m' && mean < 0.8) return;
       const line = Math.max(0.5, Math.round(mean * (0.94 + r() * 0.12) - 0.5) + 0.5);
       const qo = 0.524 + (r() - 0.5) * 0.08, qu = 1.048 - qo;
@@ -363,4 +365,4 @@ function respond(url) {
   }
   return null;
 }
-module.exports = { respond, TEAM, TEAMS, PLAYERS, SLATE };
+module.exports = { respond, TEAM, TEAMS, PLAYERS, SLATE, COMBO };

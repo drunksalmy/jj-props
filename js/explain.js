@@ -10,9 +10,30 @@
   var U = HE.util, M = HE.model;
   var X = (HE.explain = {});
 
-  X.NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', pra: 'points + rebounds + assists', fg3m: '3-pointers' };
-  X.NOUN1 = { pts: 'point', reb: 'rebound', ast: 'assist', pra: 'PRA', fg3m: '3-pointer' };
-  X.VERB = { pts: 'scores', reb: 'grabs', ast: 'dishes out', pra: 'totals', fg3m: 'makes' };
+  X.NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', pr: 'points + rebounds', pa: 'points + assists', pra: 'points + rebounds + assists', fg3m: '3-pointers' };
+  X.NOUN1 = { pts: 'point', reb: 'rebound', ast: 'assist', pr: 'point or rebound', pa: 'point or assist', pra: 'point, rebound or assist', fg3m: '3-pointer' };
+  X.VERB = { pts: 'scores', reb: 'grabs', ast: 'dishes out', pr: 'totals', pa: 'totals', pra: 'totals', fg3m: 'makes' };
+  /** "PR = points + rebounds added together" — shown on combo props */
+  X.comboNote = function (stat) {
+    var parts = M.COMBOS && M.COMBOS[stat];
+    if (!parts) return '';
+    return M.STAT_SHORT[stat] + ' = ' + parts.map(function (k) { return X.NOUN[k]; }).join(' + ') + ', added together.';
+  };
+  /**
+   * The parts of a combo projection, rounded to one decimal so they add up exactly to the rounded
+   * total we show (10.14 + 1.54 = 11.68 → "10.1 + 1.6 = 11.7", never "10.1 + 1.5 = 11.7").
+   */
+  X.comboParts = function (proj, stat) {
+    var parts = M.COMBOS && M.COMBOS[stat];
+    if (!parts || !proj || !proj.stats || !proj.stats[stat]) return null;
+    var raw = parts.map(function (k) { return proj.stats[k].mean * 10; });
+    var fl = raw.map(Math.floor);
+    var left = Math.round(proj.stats[stat].mean * 10) - fl.reduce(function (a, b) { return a + b; }, 0);
+    raw.map(function (v, i) { return i; })
+      .sort(function (a, b) { return (raw[b] - fl[b]) - (raw[a] - fl[a]); })
+      .forEach(function (i) { if (left > 0) { fl[i]++; left--; } });
+    return parts.map(function (k, i) { return { stat: k, v: fl[i] / 10 }; });
+  };
   X.STRENGTH = { strong: 'Strong pick', good: 'Good pick', lean: 'Slight lean', tossup: 'Toss-up' };
 
   X.strengthLabel = function (s) { return X.STRENGTH[s] || 'No clear edge'; };
@@ -20,6 +41,15 @@
   /** "You win if Tatum scores 27 or more points." */
   X.winCondition = function (name, stat, side, line) {
     var who = U.lastName(name) || name, noun = X.NOUN[stat], verb = X.VERB[stat];
+    if (M.COMBOS && M.COMBOS[stat]) {
+      // "You win if Tatum's points + rebounds add up to 35 or more."
+      var lead = 'You win if ' + X.poss(who) + ' ' + noun + ' add up to ';
+      if (Number.isInteger(line)) {
+        return lead + (side === 'over' ? (line + 1) + ' or more' : Math.max(0, line - 1) + ' or fewer') + '. Exactly ' + line + ' = money back.';
+      }
+      var kk = Math.floor(line) + 1;
+      return lead + (side === 'over' ? kk + ' or more' : (kk - 1) + ' or fewer') + '.';
+    }
     if (Number.isInteger(line)) {
       return side === 'over'
         ? 'You win if ' + who + ' ' + verb + ' ' + (line + 1) + ' or more ' + noun + '. Exactly ' + line + ' = money back.'
@@ -53,6 +83,12 @@
       if (sign === 0) info.push(item);
       else if (sign * dir > 0) pros.push(item);
       else cons.push(item);
+    }
+
+    // combos: show how the total adds up ("12.4 points + 6.1 rebounds = 18.5 PR")
+    var cp = X.comboParts(row.proj, s);
+    if (cp) {
+      add(0, 'How it adds up: ' + cp.map(function (x) { return x.v.toFixed(1) + ' ' + X.NOUN[x.stat]; }).join(' + ') + ' = ' + U.fmt1(an.mean) + ' ' + M.STAT_SHORT[s] + '.', 2);
     }
 
     // our projection vs the sportsbook's
@@ -100,7 +136,7 @@
         add(-1, 'Tough matchup: ' + oname + ' allow the ' + (best === 1 ? 'fewest' : U.ordinal(best) + '-fewest') + ' points (' + U.fmt1(opp.def) + ' a game' + earlyNote(opp) + ').', 2 + Math.abs(rel) * 40);
       }
     }
-    if (s === 'reb' || s === 'pra') {
+    if (s === 'reb' || s === 'pr' || s === 'pra') {
       var pace = row.proj.paceRel || 0;
       if (pace >= 0.015) add(1, 'High-scoring teams on both sides — more shots and more misses to rebound.', 1.5 + pace * 30);
       else if (pace <= -0.015) add(-1, 'Slow, low-scoring matchup — fewer missed shots to rebound.', 1.5 - pace * 30);
@@ -121,7 +157,7 @@
       var bits = [];
       if (minUp && minUp.v >= 0.8) bits.push('about ' + U.fmt1(minUp.v) + ' extra minutes');
       if (ms && ms.pts >= 0.06 && s !== 'reb') bits.push('more shots to go around');
-      if (ms && ms.reb >= 0.08 && s === 'reb') bits.push('more rebounds up for grabs');
+      if (ms && ms.reb >= 0.08 && (s === 'reb' || s === 'pr' || s === 'pra')) bits.push('more rebounds up for grabs');
       if (bits.length) add(1, 'With ' + names + ' out, he should get ' + bits.join(' and ') + '.', 2.5 + (minUp ? minUp.v : 0) + (ms ? ms.pts * 10 : 0));
     }
     if (minDown && minDown.v >= 1.5) add(-1, 'Crowded rotation: we expect about ' + U.fmt1(minDown.v) + ' fewer minutes than his usual.', 2 + minDown.v / 2);

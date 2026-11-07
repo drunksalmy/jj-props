@@ -23,8 +23,12 @@ WHAT'S ON EACH TAB
   Games         Who wins, by how many (winning margin vs the sportsbook spread),
                 total points, injuries, and the live lead tracker
                 (current lead, biggest lead, lead changes, ties, scoring runs).
-  Player Props  Every rotation player's points, rebounds, assists, PRA and 3-pointers,
-                compared with the real DraftKings line (shown as "DK -115 / -105").
+  Player Props  Every rotation player's points, rebounds, assists, 3-pointers and the
+                combos PR, PA and PRA, compared with the real DraftKings line
+                (shown as "DK -115 / -105").
+                  PR  = points + rebounds      (18 pts + 7 reb = 25 PR)
+                  PA  = points + assists       (18 pts + 4 ast = 22 PA)
+                  PRA = points + rebounds + assists
                 Betting somewhere else? Type that sportsbook's line into the "Line"
                 box — the pick and the explanation update instantly (and are remembered).
   How it works  Over/under, spreads, moneylines and parlays explained in plain English.

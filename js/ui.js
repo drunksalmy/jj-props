@@ -580,6 +580,7 @@
     h += '<label class="search">' + I.search + '<input type="search" data-filter="q" placeholder="Find a player" value="' + esc(f.q) + '" aria-label="Find a player"></label>';
     h += '<label class="check"><input type="checkbox" data-filter="picksOnly"' + (f.picksOnly ? ' checked' : '') + '> Picks only</label>';
     h += '</div>';
+    if (X.comboNote(f.stat)) h += '<p class="combo-hint">' + I.info + '<span><b>' + esc(X.comboNote(f.stat)) + '</b> Tap a player to see how his projection adds up.</span></p>';
     var rows = UI.filterRows(S);
     if (!rows.length) {
       h += '<div class="card soft">' + ((S.loading && S.loading.active) ? 'Loading player numbers…' : 'No props match these filters.') + '</div>';
@@ -675,9 +676,17 @@
       '<p class="win">' + esc(X.winCondition(p.name, stat, an.side, row.line)) + '</p>' +
       '<p class="bottom">' + esc(X.propBottomLine(an)) + '</p></div>';
     // projection breakdown
-    var pr = row.proj, st = pr.stats[stat];
-    var matchupPct = stat === 'reb' ? (pr.f.reb - 1) : stat === 'pra' ? ((pr.stats.pts.mean * (pr.f.pts - 1) + pr.stats.reb.mean * (pr.f.reb - 1) + pr.stats.ast.mean * (pr.f.ast - 1)) / Math.max(1, st.mean)) : (pr.f[stat] - 1);
-    h += '<div class="proj-box"><div class="pb"><small>Projection</small><b>' + U.fmt1(an.mean) + '</b></div>' +
+    var pr = row.proj, st = pr.stats[stat], parts = (M.COMBOS || {})[stat];
+    // combos: each part's matchup effect, weighted by how much of the total it makes up
+    var matchupPct = parts
+      ? parts.reduce(function (t, k) { return t + pr.stats[k].mean * (pr.f[k] - 1); }, 0) / Math.max(1, st.mean)
+      : (pr.f[stat] - 1);
+    // combos show what the total is made of: "Projection · points + rebounds  18.5 = 12.4 + 6.1"
+    var cp = X.comboParts(pr, stat);
+    h += '<div class="proj-box">' + (cp
+      ? '<div class="pb pb-combo"><small>Projection · ' + esc(cp.map(function (x) { return X.NOUN[x.stat]; }).join(' + ')) + '</small><b>' + U.fmt1(an.mean) +
+        ' <i>=</i> ' + cp.map(function (x) { return x.v.toFixed(1); }).join(' <i>+</i> ') + '</b></div>'
+      : '<div class="pb"><small>Projection</small><b>' + U.fmt1(an.mean) + '</b></div>') +
       '<div class="pb"><small>Expected minutes</small><b>' + U.fmt1(pr.mins) + '</b></div>' +
       '<div class="pb"><small>Per minute</small><b>' + st.rate.toFixed(2) + '</b></div>' +
       '<div class="pb"><small>Matchup effect</small><b>' + U.signed(matchupPct * 100, 0) + '%</b></div>' +
@@ -699,22 +708,25 @@
     if (rs.info.length) h += '<h3>Good to know</h3><ul class="reasons info">' + rs.info.slice(0, 3).map(li).join('') + '</ul>';
     // averages table
     var a = p.avg;
-    h += '<h3>Averages</h3><div class="tbl-wrap"><table class="tbl mini"><thead><tr><th></th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th></tr></thead><tbody>';
+    // combo props get their own column (PR / PA / PRA), next to the stats it adds up
+    var comboTh = parts ? '<th class="tot">' + esc(M.STAT_SHORT[stat]) + '</th>' : '';
+    h += '<h3>Averages</h3><div class="tbl-wrap"><table class="tbl mini"><thead><tr><th></th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th>' + comboTh + '</tr></thead><tbody>';
     [['Last 5', 'l5'], ['Last 10', 'l10'], [CH.seasonName(p.curSeason), 'cur'], [CH.seasonName(p.prevSeason), 'prev']].forEach(function (x) {
-      h += '<tr><td>' + esc(x[0]) + '</td>' + ['min', 'pts', 'reb', 'ast', 'fg3m'].map(function (s) { return '<td class="num">' + U.fmt1(a[s] && a[s][x[1]]) + '</td>'; }).join('') + '</tr>';
+      h += '<tr><td>' + esc(x[0]) + '</td>' + ['min', 'pts', 'reb', 'ast', 'fg3m'].map(function (s) {
+        return '<td class="num' + (s === stat || (parts && parts.indexOf(s) >= 0) ? ' part' : '') + '">' + U.fmt1(a[s] && a[s][x[1]]) + '</td>';
+      }).join('') + (parts ? '<td class="num tot">' + U.fmt1(a[stat] && a[stat][x[1]]) + '</td>' : '') + '</tr>';
     });
     h += '</tbody></table></div>';
-    // game log
-    h += '<h3>Game log</h3><div class="tbl-wrap"><table class="tbl mini log"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th></tr></thead><tbody>';
+    // game log: the stat this prop is about is colored green (over the line) or red (under)
+    function vsLine(v) { return v > row.line ? ' over' : v < row.line ? ' under' : ''; }
+    h += '<h3>Game log</h3><div class="tbl-wrap"><table class="tbl mini log"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th>' + comboTh + '</tr></thead><tbody>';
     p.games.slice(0, 15).forEach(function (gm) {
-      var v = M.val(gm, stat);
       h += '<tr><td>' + esc(U.shortDate(gm.ms)) + '</td><td>' + (gm.home ? 'vs ' : '@ ') + esc(gm.opp) + '</td><td>' + esc(gm.res + ' ' + (Number.isFinite(gm.ts) ? gm.ts + '-' + gm.os : '')) + '</td><td class="num">' + gm.min + '</td>' +
         ['pts', 'reb', 'ast', 'fg3m'].map(function (s) {
-          var val = gm[s];
-          var mark = (s === stat || (stat === 'pra' && s !== 'fg3m')) ? (stat === 'pra' ? '' : (val > row.line ? ' over' : val < row.line ? ' under' : '')) : '';
-          return '<td class="num' + mark + '">' + val + '</td>';
-        }).join('') + '</tr>';
-      void v;
+          var mark = s === stat ? vsLine(gm[s]) : (parts && parts.indexOf(s) >= 0 ? ' part' : '');
+          return '<td class="num' + mark + '">' + gm[s] + '</td>';
+        }).join('') +
+        (parts ? '<td class="num tot' + vsLine(M.val(gm, stat)) + '">' + M.val(gm, stat) + '</td>' : '') + '</tr>';
     });
     h += '</tbody></table></div>';
     return sheet(p.name, h);
@@ -831,6 +843,10 @@
       '<li><b>Hit rate</b> — how often this bet would have won lately (e.g. <span class="hr hr-4"><em>L10</em><b>7/10</b></span>).</li>' +
       '<li><b>Why</b> — the 2–3 biggest reasons, in plain words.</li></ol></div>';
     h += q('What is Over / Under?', '<p>The sportsbook picks a number (the <b>line</b>), like 24.5 points. You bet that the player (or both teams together) will go <b>over</b> it or stay <b>under</b> it. Lines usually end in .5 so there\'s no tie. If the line is a whole number and it lands exactly on it, you get your money back (a <b>push</b>).</p>');
+    h += q('What are PR, PA and PRA?', '<p>They\'re <b>combo props</b>: two or three of a player\'s stats added together into one number.</p>' +
+      '<ul><li><b>PR</b> = points + rebounds</li><li><b>PA</b> = points + assists</li><li><b>PRA</b> = points + rebounds + assists</li></ul>' +
+      '<p>Example: he scores 18 points with 7 rebounds and 4 assists. That\'s <b>25 PR</b> (18 + 7), <b>22 PA</b> (18 + 4) and <b>29 PRA</b>. If the PR line is 23.5, the OVER wins because 25 is more than 23.5.</p>' +
+      '<p>Our combo projection adds up his projected points, rebounds and assists (the player page shows each part), and the chance comes from how much that total usually swings for him. A quiet night in one stat can be made up by another — but sportsbooks know that too, so combos aren\'t automatically easier to win.</p>');
     h += q('What is the spread (winning margin)?', '<p>The spread evens out a mismatch. <b>Celtics −6.5</b> means the Celtics must win by <b>7 or more</b> for that bet to win. <b>Lakers +6.5</b> wins if the Lakers win, or lose by <b>6 or fewer</b>. Our "Winning margin" is our guess of how many points the winner wins by — we compare it with the sportsbook\'s spread.</p>');
     h += q('How does the Auto Parlay work?', '<p>A <b>parlay</b> joins several bets into one ticket: it pays a lot more, but <b>every leg must win</b>. On Top Picks, choose 5–10 legs and a style — JJ Props fills the slip for you:</p>' +
       '<p><b>Best value</b> picks the legs where our chance beats the DraftKings price by the most. <b>Safest</b> picks the legs most likely to hit. We use one leg per player, spread legs across different games (legs from the same game tend to win or lose together), and only use real lines on games that haven\'t started.</p>' +
@@ -838,11 +854,11 @@
     h += q('What is the moneyline?', '<p>Just pick who wins. Odds like <b>−150</b> mean bet $150 to win $100 (favorite). <b>+130</b> means bet $100 to win $130 (underdog). Every price hides a "break-even" chance: −150 needs you to be right 60% of the time.</p>');
     h += q('What do "chance" and "needs" mean?', '<p><b>Chance</b> is how often we think the bet wins. <b>Needs</b> is how often it must win to be worth it. At standard odds (−110) you risk $110 to win $100, so you must win about <b>52.4%</b> of the time just to break even. We only call something a pick when our chance is clearly above what it needs — the gap is the <b>edge</b>. The small mark on each bar shows the "needs" level.</p>' +
       '<p>For <b>estimated lines</b> (no sportsbook line), "needs" can be higher than 52%. Example: a player averages 6.1 rebounds and the line is 6.5 — the under already wins a bit more than half the time just because of where the line sits, so a sportsbook would charge more for it. That\'s why a 58% under can be only a "Slight lean" while a 56% pick on another player is a "Good pick".</p>');
-    h += q('How does the app predict player stats?', '<ol><li><b>Minutes:</b> how long he usually plays, weighted toward recent games.</li><li><b>Production per minute:</b> his points, rebounds, assists and threes per minute, this season and last.</li><li><b>Matchup:</b> does the opponent give up a lot of points? Is it a fast, high-scoring game?</li><li><b>Situation:</b> home or away, tired from last night, teammates out (more shots for him), blowout risk.</li><li><b>Swings:</b> how much his numbers bounce around game to game. That sets how sure we can be.</li></ol><p>Projection = minutes × per-minute production × adjustments. The chance comes from a curve around that projection.</p>');
+    h += q('How does the app predict player stats?', '<ol><li><b>Minutes:</b> how long he usually plays, weighted toward recent games.</li><li><b>Production per minute:</b> his points, rebounds, assists and threes per minute, this season and last.</li><li><b>Matchup:</b> does the opponent give up a lot of points? Is it a fast, high-scoring game?</li><li><b>Situation:</b> home or away, tired from last night, teammates out (more shots for him), blowout risk.</li><li><b>Swings:</b> how much his numbers bounce around game to game. That sets how sure we can be.</li><li><b>Combos (PR, PA, PRA):</b> his projected points, rebounds and assists added up.</li></ol><p>Projection = minutes × per-minute production × adjustments. The chance comes from a curve around that projection.</p>');
     h += q('How does the app predict games?', '<p>We compare how many points each team scores and allows per game, add home-court (≈2.4 pts), subtract value for injured players and back-to-backs, and blend in ESPN\'s own matchup predictor. That gives a predicted score, a win chance, a winning margin and a total.</p>');
     h += q('What updates live?', '<p>During games the app checks ESPN every 15 seconds (change it in Settings). Scores, the lead tracker (current lead, biggest lead, lead changes, ties, scoring runs), live win chance and live prop chances ("needs 6 more points in ~14 minutes") all update on their own.</p>');
     h += q('Why can\'t any pick be guaranteed?', '<p>Basketball is random: hot nights, foul trouble, blowouts, surprise injuries. Sportsbooks are also very good at setting lines. A 60% pick still loses 4 times out of 10. Treat this as a smart second opinion, not a sure thing.</p>');
-    h += q('Where do the lines come from?', '<p>All lines are <b>DraftKings</b> lines shown by ESPN: game lines (spread, total, moneyline) and player props (points, rebounds, assists, 3-pointers, P+R+A) with their over / under odds. DraftKings usually posts player lines on game day. Until then — and for deep-bench players it doesn\'t offer — the app uses an <b>estimated line</b> from the player\'s average.</p>' +
+    h += q('Where do the lines come from?', '<p>All lines are <b>DraftKings</b> lines shown by ESPN: game lines (spread, total, moneyline) and player props (points, rebounds, assists, 3-pointers, and the combos PR, PA and PRA) with their over / under odds. DraftKings usually posts player lines on game day. Until then — and for deep-bench players it doesn\'t offer — the app uses an <b>estimated line</b> from the player\'s average.</p>' +
       '<p>Betting somewhere else? Type that sportsbook\'s line in the Line box — the pick and the explanation update instantly and the app remembers it.</p>' +
       '<p>With a real line, our chance is <b>half our model, half DraftKings\' own odds</b>. Sportsbooks are usually close to right, so this keeps us honest: we only call a pick when our model clearly disagrees with the book. Early in the season — before a player has about 12 games — and for players on a new team, DraftKings\' odds count even more (80–90%), because our numbers are mostly from last season. That\'s also why most real-line picks are "Slight leans": big edges against a sportsbook are rare.</p>');
     h += '<div class="card soft">' + I.info + '<div><b>Bet responsibly.</b> For people 21+ where sports betting is legal. Set a budget, never chase losses, and take breaks. If betting stops being fun, reach out to a support line in your country.</div></div>';

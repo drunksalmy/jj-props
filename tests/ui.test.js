@@ -156,9 +156,54 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
   await page.screenshot({ path: path.join(OUT, '5c-player-sheet-reb.png') });
   await page.keyboard.press('Escape');
 
+  // combo props: PR (points + rebounds) and PA (points + assists) with real DraftKings lines
+  for (const s of ['pr', 'pa']) {
+    await page.click('.filters [data-val="' + s + '"]');
+    await page.waitForTimeout(250);
+    const info = await page.evaluate((stat) => {
+      const rows = HE.state.rows.filter((r) => r.stat === stat);
+      const bad = rows.filter((r) => {
+        const parts = stat === 'pr' ? ['pts', 'reb'] : ['pts', 'ast'];
+        return Math.abs(r.proj.stats[stat].mean - (r.proj.stats[parts[0]].mean + r.proj.stats[parts[1]].mean)) > 1e-9;
+      });
+      return { n: rows.length, book: rows.filter((r) => r.lineSource === 'book').length, bad: bad.length, shown: document.querySelectorAll('table.props tbody tr').length,
+        btn: (document.querySelector('.filters [data-val="' + stat + '"]') || {}).textContent };
+    }, s);
+    console.log(s, JSON.stringify(info));
+    if (!(info.n > 20 && info.book >= 10 && info.bad === 0 && info.shown > 0)) errors.push(s + ' props missing or wrong: ' + JSON.stringify(info));
+    if (info.btn !== s.toUpperCase()) errors.push(s + ' button label: ' + info.btn);
+    if (s === 'pr') await page.screenshot({ path: path.join(OUT, '4b-props-pr.png'), fullPage: false });
+    await page.click('table.props tbody tr td.pl');
+    await page.waitForSelector('.sheet .verdict-box');
+    await page.waitForTimeout(250);
+    const sh = await page.evaluate(() => ({
+      on: (document.querySelector('.sheet [data-sheet-stat].on') || {}).textContent,
+      combo: (document.querySelector('.sheet .pb-combo') || {}).textContent,
+      tot: Array.from(document.querySelectorAll('.sheet th.tot')).map((t) => t.textContent),
+      win: (document.querySelector('.sheet .verdict-box .win') || {}).textContent,
+      adds: Array.from(document.querySelectorAll('.sheet .reasons li')).some((li) => /^How it adds up/.test(li.textContent)),
+      logTot: document.querySelectorAll('.sheet table.log td.tot').length
+    }));
+    console.log('sheet ' + s, JSON.stringify(sh));
+    const word = s === 'pr' ? 'rebounds' : 'assists';
+    if (sh.on !== s.toUpperCase() || !new RegExp('Points \\+ ' + word, 'i').test(sh.combo || '') || sh.tot.join() !== s.toUpperCase() + ',' + s.toUpperCase() ||
+      !new RegExp('points \\+ ' + word + ' add up to').test(sh.win || '') || !sh.adds || !(sh.logTot > 0)) errors.push('combo player sheet ' + s + ': ' + JSON.stringify(sh));
+    if (s === 'pr') {
+      await page.screenshot({ path: path.join(OUT, '5d-player-sheet-pr.png') });
+      await page.evaluate(() => { const b = document.querySelector('.sheet-body'); b.scrollTop = b.scrollHeight; });
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(OUT, '5e-player-sheet-pr-log.png') });
+    }
+    await page.keyboard.press('Escape');
+  }
+  await page.click('.filters [data-val="pts"]');
+  await page.waitForTimeout(200);
+
   await page.click('.tabs [data-tab="guide"]');
   await page.waitForTimeout(200);
   await page.click('details.faq summary');
+  await page.click('details.faq summary:has-text("What are PR, PA and PRA?")');
+  await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(OUT, '6-guide.png'), fullPage: true });
 
   // settings sheet
@@ -193,6 +238,21 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
   await page.waitForSelector('.sheet');
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(OUT, 'm2-player-dark.png') });
+  // all the stat buttons (up to 7: PTS REB AST PR PA PRA 3PM) fit on one row on a phone
+  const segRow = await page.evaluate(() => {
+    const b = Array.from(document.querySelectorAll('.sheet .seg.wide button'));
+    return { n: b.length, rows: new Set(b.map((x) => Math.round(x.getBoundingClientRect().top))).size, labels: b.map((x) => x.textContent).join(' ') };
+  });
+  console.log('phone stat buttons', JSON.stringify(segRow));
+  if (segRow.rows !== 1) errors.push('stat buttons wrap on phone: ' + JSON.stringify(segRow));
+  if (await page.$('.sheet [data-sheet-stat="pa"]')) {
+    await page.tap('.sheet [data-sheet-stat="pa"]');
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(OUT, 'm2b-player-pa-dark.png') });
+    await page.evaluate(() => { const b = document.querySelector('.sheet-body'); b.scrollTop = 640; });
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(OUT, 'm2c-player-pa-dark-mid.png') });
+  } else errors.push('top pick player has no PA prop on phone');
   await page.keyboard.press('Escape');
   await page.tap('.tabs [data-tab="games"]');
   await page.waitForTimeout(300);

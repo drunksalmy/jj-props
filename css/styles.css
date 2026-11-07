@@ -523,8 +523,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 6px 16px 36px; outline: none;
 .seg button { border: 0; background: none; padding: 7px 12px; border-radius: 9px; font-weight: 800; font-size: 13px; color: var(--ink-2); letter-spacing: 0.02em; }
 .seg button:hover { color: var(--ink); }
 .seg button.on { background: var(--brand-grad); color: #fff; box-shadow: 0 6px 16px -8px rgba(91, 110, 255, 0.9); }
-.seg.wide { display: flex; margin: 12px 0; }
-.seg.wide button { flex: 1; }
+.seg.wide { display: flex; flex-wrap: nowrap; margin: 12px 0; }
+.seg.wide button { flex: 1; min-width: 0; padding-left: 4px; padding-right: 4px; }
 .seg.sm button { padding: 4px 9px; font-size: 12px; }
 select, .search input, .line-in {
   border: 1px solid var(--border-2); background: var(--surface-2); border-radius: 12px; padding: 9px 11px; color: var(--ink);
@@ -554,8 +554,15 @@ select option { background: var(--surface-solid); color: var(--ink); }
 .tbl .meter { display: block; margin-top: 4px; width: 56px; margin-left: auto; }
 .tbl.mini { font-size: 13.5px; }
 .tbl.mini td, .tbl.mini th { padding: 8px 10px; }
+.tbl.mini td.part { color: var(--ink); font-weight: 750; }
+.tbl.mini .tot { background: var(--accent-soft); font-weight: 800; }
 .tbl.log td.over { color: var(--good-ink); font-weight: 800; }
 .tbl.log td.under { color: var(--bad-ink); }
+.combo-hint { display: flex; gap: 8px; align-items: flex-start; margin: -4px 0 14px; font-size: 13.5px; color: var(--ink-2); }
+.combo-hint .ic { width: 16px; height: 16px; color: var(--accent-2); margin-top: 2px; }
+.combo-hint b { color: var(--ink); font-weight: 750; }
+.faq ul { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 3px; }
+.faq li::marker { color: var(--accent-2); }
 .lv { font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 7px; display: inline-flex; gap: 4px; align-items: center; width: max-content; }
 .lv .dot { width: 6px; height: 6px; }
 .line-ed { display: inline-flex; align-items: center; border: 1px solid var(--border-2); border-radius: 12px; overflow: hidden; background: var(--surface-2); }
@@ -632,6 +639,8 @@ select option { background: var(--surface-solid); color: var(--ink); }
 .pb { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; box-shadow: inset 0 0 0 1px var(--border); }
 .pb small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 .pb b { font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: 0.01em; }
+.pb-combo { grid-column: span 2; }
+.pb-combo b i { font-style: normal; color: var(--muted); font-weight: 700; padding: 0 2px; }
 .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 18px; }
 .chart-head h3 { margin: 0; }
 .chart-wrap { margin-top: 8px; }

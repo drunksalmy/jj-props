@@ -16,7 +16,8 @@ const bins = {}; let n = 0, brier = 0, picks = { strong: [0, 0, 0, 0], good: [0,
 let mr = 7; const mrand = () => { mr = (mr * 16807) % 2147483647; return (mr - 1) / 2147483646; };
 const mnorm = () => { let u = 0, v = 0; while (!u) u = mrand(); while (!v) v = mrand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const mk = { n: 0, brier: 0, bins: {}, picks: { strong: [0, 0, 0, 0], good: [0, 0, 0, 0], lean: [0, 0, 0, 0] } };
-const PHI = { pts: 2.0, reb: 1.3, ast: 1.25, fg3m: 1.0, pra: 2.2 };
+const PHI = { pts: 2.0, reb: 1.3, ast: 1.25, fg3m: 1.0, pr: 2.2, pa: 2.2, pra: 2.2 };
+const perStat = {};   // stat → [predictions, sum of predicted, sum of actual] against the simulated sportsbook
 Object.keys(mock.PLAYERS).forEach((id) => {
   const pl = mock.PLAYERS[id];
   const logs = E.parseGamelog(mock.respond('https://x/apis/common/v3/sports/basketball/nba/athletes/' + id + '/gamelog?season=2026'), 2026);
@@ -40,7 +41,7 @@ Object.keys(mock.PLAYERS).forEach((id) => {
       if (an.strength) { const won = (an.side === 'over') === (actual === 1); const P = picks[an.strength]; P[0]++; P[1] += won ? 1 : 0; P[2] += an.side === 'over' ? an.cOver : an.cUnder; P[3] += an.side === 'over' ? an.beO : an.beU; }
 
       // ---- the same prop against the simulated sportsbook line ----
-      const trueMean = s === 'pra' ? pl.min * (pl.rate.pts + pl.rate.reb + pl.rate.ast) : pl.min * pl.rate[s];
+      const trueMean = pl.min * (M.COMBOS[s] || [s]).reduce((t, k) => t + pl.rate[k], 0);
       const bookMean = trueMean * (1 + 0.05 * mnorm());
       const bl = U.halfLine(bookMean);
       const bv = Math.max(bookMean, 0.05) * PHI[s] + Math.pow(0.08 * bookMean, 2);
@@ -52,6 +53,8 @@ Object.keys(mock.PLAYERS).forEach((id) => {
       const b2 = Math.min(9, Math.floor(am.cOver * 10));
       mk.bins[b2] = mk.bins[b2] || [0, 0, 0]; mk.bins[b2][0]++; mk.bins[b2][1] += act2; mk.bins[b2][2] += am.cOver;
       mk.brier += (am.cOver - act2) * (am.cOver - act2); mk.n++;
+      const ps = (perStat[s] = perStat[s] || [0, 0, 0, 0, 0]); ps[0]++; ps[1] += am.cOver; ps[2] += act2;
+      if (am.strength) { ps[3]++; ps[4] += ((am.side === 'over') === (act2 === 1)) ? 1 : 0; }
       if (am.strength) { const won = (am.side === 'over') === (act2 === 1); const P = mk.picks[am.strength]; P[0]++; P[1] += won ? 1 : 0; P[2] += am.side === 'over' ? am.cOver : am.cUnder; P[3] += am.side === 'over' ? am.beO : am.beU; }
     });
   }
@@ -78,6 +81,14 @@ Object.keys(mk.bins).sort().forEach((b) => {
 });
 Object.keys(mk.picks).forEach((k) => { const P = mk.picks[k]; console.log('  ' + k.padEnd(6) + ' picks: ' + P[0] + ' (' + (P[0] / mk.n * 100).toFixed(1) + '% of props)  won ' + (P[0] ? f1(P[1] / P[0]) : '-') + '  (we said ' + (P[0] ? f1(P[2] / P[0]) : '-') + ', needed ' + (P[0] ? f1(P[3] / P[0]) : '-') + ')'); });
 console.log('worst bin gap: ' + (worst2 * 100).toFixed(1) + ' pts');
+console.log('by stat (avg predicted over% vs actual over%, picks won):');
+let statBad = [];
+Object.keys(perStat).forEach((s) => {
+  const [c, p, a, np, nw] = perStat[s];
+  console.log('  ' + s.padEnd(5) + ' ' + f1(p / c).padStart(6) + ' -> ' + f1(a / c).padStart(6) + '   (' + c + ')   picks ' + np + (np ? ' won ' + f1(nw / np) : ''));
+  if (c > 300 && Math.abs(p / c - a / c) > 0.04) statBad.push(s);
+});
+if (statBad.length) { console.log('FAIL: biased stats: ' + statBad.join(', ')); process.exit(1); }
 // picks must not promise much more than they deliver, and must clear the break-even they quote
 const bad = Object.keys(mk.picks).filter((k) => { const P = mk.picks[k]; return P[0] >= 300 && (P[1] / P[0] < P[2] / P[0] - 0.05 || P[1] / P[0] < P[3] / P[0]); });
 if (worst2 > 0.06 || bad.length) { console.log('FAIL: overconfident against sportsbook lines: ' + bad.join(', ')); process.exit(1); }
