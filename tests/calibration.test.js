@@ -16,7 +16,7 @@ const bins = {}; let n = 0, brier = 0, picks = { strong: [0, 0, 0, 0], good: [0,
 let mr = 7; const mrand = () => { mr = (mr * 16807) % 2147483647; return (mr - 1) / 2147483646; };
 const mnorm = () => { let u = 0, v = 0; while (!u) u = mrand(); while (!v) v = mrand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const mk = { n: 0, brier: 0, bins: {}, picks: { strong: [0, 0, 0, 0], good: [0, 0, 0, 0], lean: [0, 0, 0, 0] } };
-const PHI = { pts: 2.0, reb: 1.3, ast: 1.25, fg3m: 1.0, pr: 2.2, pa: 2.2, pra: 2.2 };
+const PHI = { pts: 2.0, reb: 1.3, ast: 1.25, fg3m: 1.0, pr: 2.2, pa: 2.2, ar: 1.4, pra: 2.2 };
 const perStat = {};   // stat → [predictions, sum of predicted, sum of actual] against the simulated sportsbook
 Object.keys(mock.PLAYERS).forEach((id) => {
   const pl = mock.PLAYERS[id];

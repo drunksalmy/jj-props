@@ -7,7 +7,7 @@
  *    adjustments    = missing players (injuries), tired legs (2nd night of a back-to-back)
  *    win chance     = normal curve around the expected margin (NBA margins vary ~12 pts)
  *
- *  PLAYER PROPS (points, rebounds, assists, 3-pointers, and the combos PR = pts+reb, PA = pts+ast, PRA = all three)
+ *  PLAYER PROPS (points, rebounds, assists, 3-pointers, and the combos PR = pts+reb, PA = pts+ast, AR = ast+reb, PRA = all three)
  *    projection     = expected minutes × per-minute production × matchup × home/away × teammate injuries
  *    over/under %   = negative-binomial curve around the projection, width from the player's own game-to-game swings
  *    the market     = our chance blends our model with the market's view: DraftKings' own odds when it has a
@@ -44,7 +44,7 @@
     PREV_WEIGHT_MIN: 0.55, PREV_WEIGHT_RATE: 0.7, POST_WEIGHT: 0.6,
     RATE_PRIOR: { pts: 0.46, reb: 0.19, ast: 0.11, fg3m: 0.045 },
     RATE_PRIOR_MIN: 12,      // tiny pull toward league-typical rates (matters only for players with very few minutes)
-    PHI_PRIOR: { pts: 2.0, reb: 1.3, ast: 1.3, fg3m: 1.05, pr: 2.2, pa: 2.2, pra: 2.3 },
+    PHI_PRIOR: { pts: 2.0, reb: 1.3, ast: 1.3, fg3m: 1.05, pr: 2.2, pa: 2.2, ar: 1.5, pra: 2.3 },
     PROP_CALIB: 0.8,         // shrink prop chances toward 50/50 — honest about model error
     MKT_W: 0.5,              // weight on the market's view (sportsbook odds / even line / his usual average)
     MKT_W_EARLY: 0.8,        // ...before a player has games this season (our numbers are last season's)
@@ -61,13 +61,13 @@
     EARLY_GAMES: 15          // ...until teams have played about this many games
   });
 
-  M.STATS = ['pts', 'reb', 'ast', 'pr', 'pa', 'pra', 'fg3m'];
+  M.STATS = ['pts', 'reb', 'ast', 'pr', 'pa', 'ar', 'pra', 'fg3m'];
   M.BASE_STATS = ['pts', 'reb', 'ast', 'fg3m'];
   /** combo props: the stats that get added together */
-  M.COMBOS = { pr: ['pts', 'reb'], pa: ['pts', 'ast'], pra: ['pts', 'reb', 'ast'] };
-  M.STAT_LABEL = { pts: 'Points', reb: 'Rebounds', ast: 'Assists', pr: 'Pts + Reb', pa: 'Pts + Ast', pra: 'Pts + Reb + Ast', fg3m: '3-Pointers Made' };
-  M.STAT_SHORT = { pts: 'PTS', reb: 'REB', ast: 'AST', pr: 'PR', pa: 'PA', pra: 'PRA', fg3m: '3PM' };
-  M.MIN_BASE_FOR_PROP = { pts: 5, reb: 2, ast: 1.5, pr: 7, pa: 6.5, pra: 9, fg3m: 0.7 };
+  M.COMBOS = { pr: ['pts', 'reb'], pa: ['pts', 'ast'], ar: ['ast', 'reb'], pra: ['pts', 'reb', 'ast'] };
+  M.STAT_LABEL = { pts: 'Points', reb: 'Rebounds', ast: 'Assists', pr: 'Pts + Reb', pa: 'Pts + Ast', ar: 'Ast + Reb', pra: 'Pts + Reb + Ast', fg3m: '3-Pointers Made' };
+  M.STAT_SHORT = { pts: 'PTS', reb: 'REB', ast: 'AST', pr: 'PR', pa: 'PA', ar: 'AR', pra: 'PRA', fg3m: '3PM' };
+  M.MIN_BASE_FOR_PROP = { pts: 5, reb: 2, ast: 1.5, pr: 7, pa: 6.5, ar: 3.5, pra: 9, fg3m: 0.7 };
 
   M.val = function (g, s) {
     var parts = M.COMBOS[s];

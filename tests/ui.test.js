@@ -157,14 +157,14 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
   await page.keyboard.press('Escape');
 
   // combo props: PR (points + rebounds) and PA (points + assists) with real DraftKings lines
-  for (const s of ['pr', 'pa']) {
+  for (const s of ['pr', 'pa', 'ar']) {
     await page.click('.filters [data-val="' + s + '"]');
     await page.waitForTimeout(250);
     const info = await page.evaluate((stat) => {
       const rows = HE.state.rows.filter((r) => r.stat === stat);
       const bad = rows.filter((r) => {
-        const parts = stat === 'pr' ? ['pts', 'reb'] : ['pts', 'ast'];
-        return Math.abs(r.proj.stats[stat].mean - (r.proj.stats[parts[0]].mean + r.proj.stats[parts[1]].mean)) > 1e-9;
+        const parts = HE.model.COMBOS[stat];
+        return Math.abs(r.proj.stats[stat].mean - parts.reduce((t, k) => t + r.proj.stats[k].mean, 0)) > 1e-9;
       });
       return { n: rows.length, book: rows.filter((r) => r.lineSource === 'book').length, bad: bad.length, shown: document.querySelectorAll('table.props tbody tr').length,
         btn: (document.querySelector('.filters [data-val="' + stat + '"]') || {}).textContent };
@@ -185,9 +185,9 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
       logTot: document.querySelectorAll('.sheet table.log td.tot').length
     }));
     console.log('sheet ' + s, JSON.stringify(sh));
-    const word = s === 'pr' ? 'rebounds' : 'assists';
-    if (sh.on !== s.toUpperCase() || !new RegExp('Points \\+ ' + word, 'i').test(sh.combo || '') || sh.tot.join() !== s.toUpperCase() + ',' + s.toUpperCase() ||
-      !new RegExp('points \\+ ' + word + ' add up to').test(sh.win || '') || !sh.adds || !(sh.logTot > 0)) errors.push('combo player sheet ' + s + ': ' + JSON.stringify(sh));
+    const words = { pr: 'points \\+ rebounds', pa: 'points \\+ assists', ar: 'assists \\+ rebounds' }[s];
+    if (sh.on !== s.toUpperCase() || !new RegExp(words, 'i').test(sh.combo || '') || sh.tot.join() !== s.toUpperCase() + ',' + s.toUpperCase() ||
+      !new RegExp(words + ' add up to').test(sh.win || '') || !sh.adds || !(sh.logTot > 0)) errors.push('combo player sheet ' + s + ': ' + JSON.stringify(sh));
     if (s === 'pr') {
       await page.screenshot({ path: path.join(OUT, '5d-player-sheet-pr.png') });
       await page.evaluate(() => { const b = document.querySelector('.sheet-body'); b.scrollTop = b.scrollHeight; });
@@ -202,7 +202,7 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
   await page.click('.tabs [data-tab="guide"]');
   await page.waitForTimeout(200);
   await page.click('details.faq summary');
-  await page.click('details.faq summary:has-text("What are PR, PA and PRA?")');
+  await page.click('details.faq summary:has-text("What are PR, PA, AR and PRA?")');
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(OUT, '6-guide.png'), fullPage: true });
 
@@ -238,7 +238,7 @@ const PNG1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
   await page.waitForSelector('.sheet');
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(OUT, 'm2-player-dark.png') });
-  // all the stat buttons (up to 7: PTS REB AST PR PA PRA 3PM) fit on one row on a phone
+  // all the stat buttons (up to 8: PTS REB AST PR PA AR PRA 3PM) fit on one row on a phone
   const segRow = await page.evaluate(() => {
     const b = Array.from(document.querySelectorAll('.sheet .seg.wide button'));
     return { n: b.length, rows: new Set(b.map((x) => Math.round(x.getBoundingClientRect().top))).size, labels: b.map((x) => x.textContent).join(' ') };

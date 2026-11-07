@@ -10,9 +10,9 @@
   var U = HE.util, M = HE.model;
   var X = (HE.explain = {});
 
-  X.NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', pr: 'points + rebounds', pa: 'points + assists', pra: 'points + rebounds + assists', fg3m: '3-pointers' };
-  X.NOUN1 = { pts: 'point', reb: 'rebound', ast: 'assist', pr: 'point or rebound', pa: 'point or assist', pra: 'point, rebound or assist', fg3m: '3-pointer' };
-  X.VERB = { pts: 'scores', reb: 'grabs', ast: 'dishes out', pr: 'totals', pa: 'totals', pra: 'totals', fg3m: 'makes' };
+  X.NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', pr: 'points + rebounds', pa: 'points + assists', ar: 'assists + rebounds', pra: 'points + rebounds + assists', fg3m: '3-pointers' };
+  X.NOUN1 = { pts: 'point', reb: 'rebound', ast: 'assist', pr: 'point or rebound', pa: 'point or assist', ar: 'assist or rebound', pra: 'point, rebound or assist', fg3m: '3-pointer' };
+  X.VERB = { pts: 'scores', reb: 'grabs', ast: 'dishes out', pr: 'totals', pa: 'totals', ar: 'totals', pra: 'totals', fg3m: 'makes' };
   /** "PR = points + rebounds added together" — shown on combo props */
   X.comboNote = function (stat) {
     var parts = M.COMBOS && M.COMBOS[stat];
@@ -136,7 +136,7 @@
         add(-1, 'Tough matchup: ' + oname + ' allow the ' + (best === 1 ? 'fewest' : U.ordinal(best) + '-fewest') + ' points (' + U.fmt1(opp.def) + ' a game' + earlyNote(opp) + ').', 2 + Math.abs(rel) * 40);
       }
     }
-    if (s === 'reb' || s === 'pr' || s === 'pra') {
+    if (s === 'reb' || s === 'pr' || s === 'ar' || s === 'pra') {
       var pace = row.proj.paceRel || 0;
       if (pace >= 0.015) add(1, 'High-scoring teams on both sides — more shots and more misses to rebound.', 1.5 + pace * 30);
       else if (pace <= -0.015) add(-1, 'Slow, low-scoring matchup — fewer missed shots to rebound.', 1.5 - pace * 30);
@@ -156,8 +156,8 @@
     if (names && (minUp || (ms && ms.pts >= 0.06))) {
       var bits = [];
       if (minUp && minUp.v >= 0.8) bits.push('about ' + U.fmt1(minUp.v) + ' extra minutes');
-      if (ms && ms.pts >= 0.06 && s !== 'reb') bits.push('more shots to go around');
-      if (ms && ms.reb >= 0.08 && (s === 'reb' || s === 'pr' || s === 'pra')) bits.push('more rebounds up for grabs');
+      if (ms && ms.pts >= 0.06 && s !== 'reb' && s !== 'ar') bits.push('more shots to go around');
+      if (ms && ms.reb >= 0.08 && (s === 'reb' || s === 'pr' || s === 'ar' || s === 'pra')) bits.push('more rebounds up for grabs');
       if (bits.length) add(1, 'With ' + names + ' out, he should get ' + bits.join(' and ') + '.', 2.5 + (minUp ? minUp.v : 0) + (ms ? ms.pts * 10 : 0));
     }
     if (minDown && minDown.v >= 1.5) add(-1, 'Crowded rotation: we expect about ' + U.fmt1(minDown.v) + ' fewer minutes than his usual.', 2 + minDown.v / 2);

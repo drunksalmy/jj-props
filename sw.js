@@ -1,8 +1,8 @@
 /* JJ Props service worker — only used when the app is hosted online (lets phones install it).
    App files: network first, saved copy when offline. ESPN data is never cached here (always live). */
-var CACHE = 'jjprops-v3';
-var SHELL = ['./', './index.html', './css/fonts.css', './css/styles.css?v=2', './js/util.js?v=3', './js/store.js?v=2', './js/espn.js?v=2', './js/model.js?v=2',
-  './js/explain.js?v=2', './js/parlay.js?v=2', './js/charts.js?v=2', './js/ui.js?v=2', './js/app.js?v=2', './icons/icon.svg', './icons/icon-192.png', './manifest.webmanifest'];
+var CACHE = 'jjprops-v4';
+var SHELL = ['./', './index.html', './css/fonts.css', './css/styles.css?v=4', './js/util.js?v=4', './js/store.js?v=4', './js/espn.js?v=4', './js/model.js?v=4',
+  './js/explain.js?v=4', './js/parlay.js?v=4', './js/charts.js?v=4', './js/ui.js?v=4', './js/app.js?v=4', './icons/icon.svg', './icons/icon-192.png', './manifest.webmanifest'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
 });

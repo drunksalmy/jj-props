@@ -189,8 +189,10 @@ test('combo props: PR = points + rebounds, PA = points + assists', () => {
   assert.strictEqual(M.val(g, 'pr'), 25); assert.strictEqual(M.val(g, 'pa'), 22); assert.strictEqual(M.val(g, 'pra'), 29); assert.strictEqual(M.val(g, 'reb'), 7);
   close(proj.stats.pr.mean, proj.stats.pts.mean + proj.stats.reb.mean, 1e-9);
   close(proj.stats.pa.mean, proj.stats.pts.mean + proj.stats.ast.mean, 1e-9);
+  close(proj.stats.ar.mean, proj.stats.ast.mean + proj.stats.reb.mean, 1e-9); assert.strictEqual(M.val(g, 'ar'), 11);
+  assert.strictEqual(X.winCondition('Josh Giddey', 'ar', 'over', 14.5), "You win if Giddey's assists + rebounds add up to 15 or more.");
   close(proj.stats.pr.rate, proj.stats.pts.rate + proj.stats.reb.rate, 1e-12);
-  ['pr', 'pa'].forEach((s) => {
+  ['pr', 'pa', 'ar'].forEach((s) => {
     const st = proj.stats[s];
     assert.ok(star.phi[s] >= 0.8 && star.phi[s] <= 4.5, 'phi ' + s);
     close(st.var, st.mean * star.phi[s] + Math.pow(M.CONFIG.PROJ_UNCERT * st.mean, 2), 1e-9);
@@ -231,12 +233,13 @@ test('DraftKings prop lines: pairs, main line, types', () => {
   const ids = Object.keys(lines);
   assert.ok(ids.length >= 12, 'players ' + ids.length);
   const one = lines[ids[0]];
-  ['pts', 'reb', 'ast', 'pr', 'pa', 'pra'].forEach((s) => { assert.ok(one[s] && one[s].line > 0 && Number.isFinite(one[s].over) && Number.isFinite(one[s].under), s); });
+  ['pts', 'reb', 'ast', 'pr', 'pa', 'ar', 'pra'].forEach((s) => { assert.ok(one[s] && one[s].line > 0 && Number.isFinite(one[s].over) && Number.isFinite(one[s].under), s); });
   // PR (type 88) and PA (type 87) map to the right stats; types we don't use (89 = assists + rebounds) are skipped
   const typeLine = (tid) => { const x = pb.items.find((it) => it.type.id === tid); return [x.athlete.$ref.match(/athletes\/(\d+)/)[1], x.current.target.value]; };
   let [a88, l88] = typeLine('88'); assert.strictEqual(lines[a88].pr.line, l88);
   let [a87, l87] = typeLine('87'); assert.strictEqual(lines[a87].pa.line, l87);
-  assert.ok(pb.items.some((it) => it.type.id === '89') && ids.every((k) => Object.keys(lines[k]).every((s) => M.STATS.includes(s))), 'only known stats');
+  let [a89, l89] = typeLine('89'); assert.strictEqual(lines[a89].ar.line, l89);
+  assert.ok(ids.every((k) => Object.keys(lines[k]).every((s) => M.STATS.includes(s))), 'only known stats');
   // first entry is the over, second the under; milestones are ignored
   const it = pb.items.filter((x) => x.type.id === '1');
   const aid = it[0].athlete.$ref.match(/athletes\/(\d+)/)[1];

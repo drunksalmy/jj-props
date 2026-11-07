@@ -6,7 +6,7 @@
  *   standings   → points scored / allowed per game for every team (team strength)
  *   roster      → players on a team (+ injury status)
  *   gamelog     → every game a player played in a season (props history)
- *   propBets    → DraftKings player prop lines (points, rebounds, assists, 3s, P+R, P+A, P+R+A) + their odds
+ *   propBets    → DraftKings player prop lines (points, rebounds, assists, 3s, P+R, P+A, A+R, P+R+A) + their odds
  */
 (function () {
   'use strict';
@@ -555,8 +555,8 @@
   /* ------------------------------------------------------------------ */
   /* player prop lines (DraftKings via ESPN)                             */
   /* ------------------------------------------------------------------ */
-  // ESPN prop type ids: 87 = Total Points and Assists, 88 = Total Points and Rebounds, 90 = Points, Rebounds and Assists
-  var PROP_TYPES = { '1': 'pts', '2': 'ast', '3': 'reb', '4': 'fg3m', '87': 'pa', '88': 'pr', '90': 'pra' };
+  // ESPN prop type ids: 87 = Total Points and Assists, 88 = Total Points and Rebounds, 89 = Total Assists and Rebounds, 90 = Points, Rebounds and Assists
+  var PROP_TYPES = { '1': 'pts', '2': 'ast', '3': 'reb', '4': 'fg3m', '87': 'pa', '88': 'pr', '89': 'ar', '90': 'pra' };
   E.PROP_TYPES = PROP_TYPES;
   function bookName(n) { return /draft\s*kings/i.test(n || '') ? 'DraftKings' : (n || 'Sportsbook'); }
   E.bookName = bookName;
